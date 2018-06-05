@@ -6,15 +6,15 @@
 extern crate bit_field;
 extern crate volatile;
 
+mod clock;
 mod port;
 mod sim;
 mod watchdog;
-mod clock;
 
+use clock::{Mcg, Oscillator};
 use port::{Port, PortName};
 use sim::{ClockGate, Sim};
 use watchdog::Watchdog;
-use clock::{Oscillator, Mcg};
 
 extern "C" fn main() -> ! {
     unsafe { Watchdog::new() }.disable();

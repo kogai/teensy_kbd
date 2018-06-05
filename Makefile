@@ -14,7 +14,7 @@ $(HEX): $(ELF)
 	arm-none-eabi-objcopy -O ihex $(ELF) $(HEX)
 
 flash: $(HEX)
-	teensy-loader-cli -w -mmcu=mk20dx128 $(HEX) -v
+	teensy_loader_cli -w -mmcu=mk20dx256 $(HEX) -v
 
 clean:
 	cargo clean
