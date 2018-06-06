@@ -187,3 +187,31 @@ impl Fei {
         Fbe { mcg: self.mcg }
     }
 }
+
+impl Fbe {
+    pub fn enable_pull(self, numerator: u8, denominator: u8) -> Pbe {
+        if numerator < 24 || numerator > 55 {
+            panic!("Invalid PLL VCO divide factor: {}", numerator);
+        }
+        if denominator < 1 || denominator > 25 {
+            panic!("Invalid PLL reference divide factor: {}", numerator);
+        }
+
+        self.mcg.c5.update(|c5| {
+            c5.set_bits(0..5, denominator - 1);
+        });
+
+        self.mcg.c6.update(|c6| {
+            c6.set_bits(0..5, numerator - 24);
+            c6.set_bit(6, true);
+        });
+
+        // Wait for PLL to be enabled
+        while !self.mcg.s.read().get_bit(5) {}
+
+        // Wait for the PLL to be "locked" and stable
+        while !self.mcg.s.read().get_bit(6) {}
+
+        Pbe { mcg: self.mcg }
+    }
+}
