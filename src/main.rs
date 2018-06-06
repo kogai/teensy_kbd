@@ -10,6 +10,7 @@ mod clock;
 mod ocs;
 mod port;
 mod sim;
+mod uart;
 mod watchdog;
 
 use clock::Mcg;

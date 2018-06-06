@@ -64,6 +64,18 @@ impl Port {
 pub struct Tx(u8);
 pub struct Rx(u8);
 
+impl Tx {
+    pub fn uart(&self) -> u8 {
+        self.0
+    }
+}
+
+impl Rx {
+    pub fn uart(&self) -> u8 {
+        self.0
+    }
+}
+
 impl Pin {
     pub fn make_gpio(self) -> GpioPin {
         unsafe {
