@@ -215,3 +215,19 @@ impl Fbe {
         Pbe { mcg: self.mcg }
     }
 }
+
+impl Pbe {
+    pub fn use_pll(self) {
+        self.mcg.c1.update(|c1| {
+            c1.set_bits(6..8, OscSource::LockedLoop as u8);
+        });
+
+        // mcg.c1 and mcg.s have slightly different behaviors.
+        // In c1, we use one value to indicate "Use whichever LL is
+        // enabled". In s, it is differentiated between the FLL at 0,
+        // and the PLL at 3. Instead of adding a value to OscSource
+        // which would be invalid to set, we just check for the known
+        // value "3" here.
+        while self.mcg.s.read().get_bits(2..4) != 3 {}
+    }
+}
