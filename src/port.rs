@@ -2,6 +2,7 @@ use bit_field::BitField;
 use volatile::Volatile;
 
 pub enum PortName {
+    B,
     C,
 }
 
@@ -60,12 +61,41 @@ impl Port {
     }
 }
 
+pub struct Tx(u8);
+pub struct Rx(u8);
+
 impl Pin {
     pub fn make_gpio(self) -> GpioPin {
         unsafe {
             let port = &mut *self.port;
             port.set_pin_mode(self.pin, 1);
             GpioPin::new(port.name(), self.pin)
+        }
+    }
+
+    pub fn make_rx(self) -> Rx {
+        unsafe {
+            let port = &mut *self.port;
+            match (port.name(), self.pin) {
+                (PortName::B, 16) => {
+                    port.set_pin_mode(self.pin, 3);
+                    Rx(0)
+                }
+                _ => panic!("Invalid serial Rx pin"),
+            }
+        }
+    }
+
+    pub fn make_tx(self) -> Tx {
+        unsafe {
+            let port = &mut *self.port;
+            match (port.name(), self.pin) {
+                (PortName::B, 17) => {
+                    port.set_pin_mode(self.pin, 3);
+                    Tx(0)
+                }
+                _ => panic!("Invalid serial Tx pin"),
+            }
         }
     }
 }
