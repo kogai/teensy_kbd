@@ -1,4 +1,5 @@
 use bit_field::BitField;
+use core::mem;
 use volatile::Volatile;
 
 /// The crystal oscillator on the Teensy 3.2 has a capacitance of 10pf
@@ -107,6 +108,18 @@ impl Mcg {
         });
 
         while self.s.read().get_bits(2..4) != 3 {}
+    }
+
+    pub fn clock(&'static mut self) -> Clock {
+        let source: OscSource = unsafe { mem::transmute(self.c1.read().get_bits(6..8)) };
+        let fll_internal = self.c1.read().get_bit(2);
+        let pll_enabled = self.c6.read().get_bit(6);
+        match (fll_internal, pll_enabled, source) {
+            (true, false, OscSource::LockedLoop) => Clock::Fei(Fei { mcg: self }),
+            (false, false, OscSource::External) => Clock::Fbe(Fbe { mcg: self }),
+            (_, true, OscSource::External) => Clock::Pbe(Pbe { mcg: self }),
+            _ => panic!("The current clock mode cannot be represented as a known struct"),
+        }
     }
 }
 
@@ -230,4 +243,10 @@ impl Pbe {
         // value "3" here.
         while self.mcg.s.read().get_bits(2..4) != 3 {}
     }
+}
+
+pub enum Clock {
+    Fei(Fei),
+    Fbe(Fbe),
+    Pbe(Pbe),
 }
