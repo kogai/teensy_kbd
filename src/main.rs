@@ -7,25 +7,30 @@ extern crate bit_field;
 extern crate volatile;
 
 mod clock;
+mod ocs;
 mod port;
 mod sim;
 mod watchdog;
 
-use clock::{Mcg, Oscillator};
+use clock::Mcg;
 use port::{Port, PortName};
 use sim::{ClockGate, Sim};
 use watchdog::Watchdog;
 
 extern "C" fn main() -> ! {
-    unsafe { Watchdog::new() }.disable();
+    let (wdog, sim, mcg, osc, pin) = unsafe {
+        (
+            Watchdog::new(),
+            Sim::new(),
+            Mcg::new(),
+            ocs::Osc::new(),
+            Port::new(PortName::C).pin(5),
+        )
+    };
 
-    let port_c = unsafe { Port::new(PortName::C) };
-
-    let sim = unsafe { Sim::new() };
-    let oscillator = unsafe { Oscillator::new() };
-    oscillator.enable(clock::TEENSY_32_CAPACITANCE);
+    wdog.disable();
+    osc.enable(clock::TEENSY_32_CAPACITANCE);
     sim.enable_clock_gate(ClockGate::PortC);
-
     /*
      * Set the dividers for the various clocks:
      *      Core: 72Mhz
@@ -36,12 +41,22 @@ extern "C" fn main() -> ! {
     sim.set_dividers(1, 2, 3);
 
     // We can now move the MCG to using the external oscillator
-    let mcg = unsafe { Mcg::new() };
-    mcg.move_to_external_clock();
+    if let clock::Clock::Fei(mut fei) = mcg.clock() {
+        // Our 16MHz xtal is "very fast", and needs to be divided
+        // by 512 to be in the acceptable FLL range
+        fei.enable_xtal(clock::OscRange::VeryHigh);
+        let fbe = fei.use_external(512);
 
-    let mut led_pin = unsafe { port_c.pin(5) }.make_gpio();
-    led_pin.output();
-    led_pin.high();
+        // PLL is 27/6 * xtal == 72MHz
+        let pbe = fbe.enable_pull(27, 6);
+        pbe.use_pll();
+    } else {
+        panic!("Somehow the clock wasn't in FEI mode")
+    }
+
+    let mut gpio = pin.make_gpio();
+    gpio.output();
+    gpio.high();
 
     loop {}
 }
