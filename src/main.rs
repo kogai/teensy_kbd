@@ -14,6 +14,7 @@ mod uart;
 mod watchdog;
 
 use clock::Mcg;
+use core::fmt::Write;
 use port::{Port, PortName};
 use sim::{ClockGate, Sim};
 use watchdog::Watchdog;
@@ -54,7 +55,13 @@ extern "C" fn main() -> ! {
     } else {
         panic!("Somehow the clock wasn't in FEI mode")
     }
+    let mut uart = unsafe {
+        let rx = port::Port::new(port::PortName::B).pin(16).make_rx();
+        let tx = port::Port::new(port::PortName::B).pin(17).make_tx();
+        uart::Uart::new(0, Some(rx), Some(tx), (468, 24))
+    };
 
+    let _ = writeln!(uart, "Hello, world!");
     let mut gpio = pin.make_gpio();
     gpio.output();
     gpio.high();

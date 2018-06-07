@@ -39,6 +39,7 @@ impl Port {
     pub unsafe fn new(name: PortName) -> &'static mut Port {
         &mut *match name {
             PortName::C => 0x4004_b000 as *mut Port,
+            _ => panic!("Invalid port name"),
         }
     }
 
@@ -116,6 +117,7 @@ impl GpioPin {
     pub unsafe fn new(port: PortName, pin: usize) -> GpioPin {
         let bitband = match port {
             PortName::C => 0x43fe_1000 as *mut GpioBitband,
+            _ => panic!("Invalid port name"),
         };
 
         GpioPin { bitband, pin }
