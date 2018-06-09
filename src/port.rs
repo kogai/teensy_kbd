@@ -2,7 +2,6 @@ use bit_field::BitField;
 use volatile::Volatile;
 
 pub enum PortName {
-    B,
     C,
 }
 
@@ -90,7 +89,7 @@ impl Pin {
         unsafe {
             let port = &mut *self.port;
             match (port.name(), self.pin) {
-                (PortName::B, 16) => {
+                (PortName::C, 16) => {
                     port.set_pin_mode(self.pin, 3);
                     Rx(0)
                 }
@@ -103,7 +102,7 @@ impl Pin {
         unsafe {
             let port = &mut *self.port;
             match (port.name(), self.pin) {
-                (PortName::B, 17) => {
+                (PortName::C, 17) => {
                     port.set_pin_mode(self.pin, 3);
                     Tx(0)
                 }

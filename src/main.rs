@@ -41,27 +41,28 @@ extern "C" fn main() -> ! {
      */
     // TODO: set the USB divider
     sim.set_dividers(1, 2, 3);
+    mcg.move_to_external_clock();
 
     // We can now move the MCG to using the external oscillator
-    // if let clock::Clock::Fei(mut fei) = mcg.clock() {
-    //     // Our 16MHz xtal is "very fast", and needs to be divided
-    //     // by 512 to be in the acceptable FLL range
-    //     fei.enable_xtal(clock::OscRange::VeryHigh);
-    //     let fbe = fei.use_external(512);
+    if let clock::Clock::Fei(mut fei) = mcg.clock() {
+        // Our 16MHz xtal is "very fast", and needs to be divided
+        // by 512 to be in the acceptable FLL range
+        fei.enable_xtal(clock::OscRange::VeryHigh);
+        let fbe = fei.use_external(512);
 
-    //     // PLL is 27/6 * xtal == 72MHz
-    //     let pbe = fbe.enable_pull(27, 6);
-    //     pbe.use_pll();
-    // } else {
-    //     panic!("Somehow the clock wasn't in FEI mode")
-    // }
-    // let mut uart = unsafe {
-    // let rx = port::Port::new(port::PortName::B).pin(16).make_rx();
-    // let tx = port::Port::new(port::PortName::B).pin(17).make_tx();
-    // uart::Uart::new(0, Some(rx), Some(tx), (468, 24))
-    // };
+        // PLL is 27/6 * xtal == 72MHz
+        let pbe = fbe.enable_pull(27, 6);
+        pbe.use_pll();
+    } else {
+        panic!("Somehow the clock wasn't in FEI mode")
+    }
+    let mut uart = unsafe {
+        let rx = port::Port::new(port::PortName::C).pin(16).make_rx();
+        let tx = port::Port::new(port::PortName::C).pin(17).make_tx();
+        uart::Uart::new(0, Some(rx), Some(tx), (468, 24))
+    };
 
-    // let _ = writeln!(uart, "Hello, world!");
+    let _ = writeln!(uart, "Hello, world!");
     let mut gpio = pin.make_gpio();
     gpio.output();
     gpio.high();
